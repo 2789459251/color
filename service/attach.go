@@ -32,6 +32,10 @@ func Upload(c *gin.Context) {
 		utils.RespFail(w, err.Error())
 	}
 	//拷贝文件
-	_, err := io.Copy(newFile, srcFile)
-
+	_, err = io.Copy(newFile, srcFile)
+	if err != nil {
+		utils.RespFail(w, err.Error())
+	}
+	url := "./Asset/Upload/Color" + fileName
+	utils.RespOk(w, url, "发送图片成功")
 }
