@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -46,7 +47,9 @@ import (
 //		return nil
 //	}
 func main() {
+	fmt.Println(rands())
+}
+func rands() string {
 	rand.Seed(time.Now().UnixNano())
-	a := rand.Int31n(2) + 1
-	fmt.Println(a)
+	return strconv.Itoa(int(rand.Int31n(2) + 1))
 }

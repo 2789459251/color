@@ -75,10 +75,12 @@ func LoginByPassword(c *gin.Context) {
 			"data":    nil,
 		})
 		return
-
 	}
 	password := c.Request.FormValue("password")
 	if utils.ComparePwd(user.Password, password) {
+		if !signed(user, c) {
+			return
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"code":    0, //成功
 			"message": "欢迎回来",
@@ -151,7 +153,9 @@ func LoginByCode(c *gin.Context) {
 		})
 		return
 	}
-	var expiredTime = time.Now().Add(12 * time.Hour)
+	if !signed(user, c) {
+		return
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "欢迎回来",
@@ -241,4 +245,24 @@ func isStrongPassword(password string) bool {
 
 	// 检查是否满足所有条件
 	return hasUpperCase && hasLowerCase && hasDigit && hasSpecialChar
+}
+func signed(user models.User, c *gin.Context) bool {
+	// 查询数据库，通过用户密码拿到 userId
+	userId := user.ID
+	// token 过期时间 12 h，Time 类型
+	var expiredTime = time.Now().Add(12 * time.Hour)
+
+	// 生成 token string
+	tokenStr, tokenErr := utils.GenerateToken(uint64(userId), expiredTime)
+	if tokenErr != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"message": "未能生成令牌token",
+			"data":    nil,
+		})
+		return false
+	}
+	// 设置响应头信息的 token
+	c.SetCookie("Authorization", tokenStr, 60, "/", "127.0.0.1", false, true)
+	return true
 }
