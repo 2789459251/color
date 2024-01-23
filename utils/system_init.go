@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
-	"github.com/spf13/viper" //从yml读取配置信息
+	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -37,6 +37,7 @@ func InitMysql() {
 	DB, _ = gorm.Open(mysql.Open(viper.GetString("mysql.dns")), &gorm.Config{
 		Logger: mylogger,
 	})
+
 	fmt.Println("mysql inited")
 }
 func InitRedis() {

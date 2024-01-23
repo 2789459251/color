@@ -12,7 +12,6 @@ import (
 
 func CreateUser(c *gin.Context) {
 	//validate := validator.New()
-	//Todo : 验证码 找回密码 查看密码
 	user := models.User{}
 	phone := c.Request.FormValue("phone")
 	user2 := models.FindUser(phone)
@@ -26,7 +25,7 @@ func CreateUser(c *gin.Context) {
 	}
 	user.Phone = phone
 	//err := validate.Var(user.Phone, "required,regexp=^1[3-9]{1}\\\\d{9}$")
-	if !isMatchPassword(user.Phone) {
+	if !isMatchPhone(user.Phone) {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    -1, //失败
 			"message": "电话号码无效",
@@ -36,7 +35,7 @@ func CreateUser(c *gin.Context) {
 	}
 	password := c.Request.FormValue("password")
 	repassword := c.Request.FormValue("repassword")
-	if !isMatchPassword(password) {
+	if !isStrongPassword(password) {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    -1, //失败
 			"message": "密码无效,请输入长度在8-16位的字母数字或特殊字符",
@@ -63,6 +62,7 @@ func CreateUser(c *gin.Context) {
 	}
 
 }
+
 func LoginByPassword(c *gin.Context) {
 	//不要明文存储密码=
 	phone := c.Request.FormValue("phone")
@@ -94,6 +94,7 @@ func LoginByPassword(c *gin.Context) {
 		return
 	}
 }
+
 func SendCode(c *gin.Context) {
 	//post请求->phone
 	phone := c.Request.FormValue("phone")
@@ -110,10 +111,11 @@ func SendCode(c *gin.Context) {
 	utils.Red.Set(c, phone, code, 5*time.Minute)
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0, //成功
-		"message": "验证码已发送，请注意查收",
+		"message": "验证码已发送，请注意查收,code:" + string(code),
 		"data":    nil,
 	})
 }
+
 func LoginByCode(c *gin.Context) {
 	//post请求->phone
 	phone := c.Request.FormValue("phone")
@@ -140,7 +142,7 @@ func LoginByCode(c *gin.Context) {
 	user := models.FindUser(phone)
 	if user.Password == "" {
 		user.Phone = phone
-		user.Password = "111111Az*"
+		user.Password, _ = utils.GetPwd("111111Az*")
 		models.CreateUser(user)
 		c.JSON(http.StatusOK, gin.H{
 			"code":    0,
@@ -149,6 +151,7 @@ func LoginByCode(c *gin.Context) {
 		})
 		return
 	}
+	var expiredTime = time.Now().Add(12 * time.Hour)
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
 		"message": "欢迎回来",
@@ -156,22 +159,34 @@ func LoginByCode(c *gin.Context) {
 	})
 	return
 }
+
 func ResetPassword(c *gin.Context) {
 	phone := c.Request.FormValue("phone")
 	password := c.Request.FormValue("password")
+	user := models.FindUser(phone)
 	if !isMatchPhone(phone) {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    -1,
 			"message": "手机号码无效",
 			"data":    nil,
 		})
+		return
 	}
-	if !isMatchPassword(password) {
+	if user.Password == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"message": "用户尚未注册",
+			"data":    nil,
+		})
+		return
+	}
+	if !isStrongPassword(password) {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    -1,
 			"message": "密码无效",
 			"data":    nil,
 		})
+		return
 	}
 	models.EditUserPassword(password, phone)
 	c.JSON(http.StatusOK, gin.H{
@@ -180,11 +195,50 @@ func ResetPassword(c *gin.Context) {
 		"data":    nil,
 	})
 }
+
 func isMatchPhone(phone string) bool {
 	flag, _ := regexp.Match("^1[3-9]{1}\\d{9}", []byte(phone))
+	if len(phone) != 11 {
+		flag = false
+	}
 	return flag
 }
-func isMatchPassword(password string) bool {
-	flag, _ := regexp.Match("[A-z0-9~@\\*()_]{8,16}", []byte(password))
-	return flag
+
+func isStrongPassword(password string) bool {
+	// 密码长度在8到16之间
+	if len(password) < 8 || len(password) > 16 {
+		return false
+	}
+
+	hasUpperCase := false
+	hasLowerCase := false
+	hasDigit := false
+	hasSpecialChar := false
+
+	for _, char := range password {
+		ascii := int(char)
+
+		// 检查大写字母
+		if ascii >= 65 && ascii <= 90 {
+			hasUpperCase = true
+		}
+
+		// 检查小写字母
+		if ascii >= 97 && ascii <= 122 {
+			hasLowerCase = true
+		}
+
+		// 检查数字
+		if ascii >= 48 && ascii <= 57 {
+			hasDigit = true
+		}
+
+		// 检查特殊字符
+		if (ascii >= 33 && ascii <= 47) || (ascii >= 58 && ascii <= 64) || (ascii >= 91 && ascii <= 96) || (ascii >= 123 && ascii <= 126) {
+			hasSpecialChar = true
+		}
+	}
+
+	// 检查是否满足所有条件
+	return hasUpperCase && hasLowerCase && hasDigit && hasSpecialChar
 }
