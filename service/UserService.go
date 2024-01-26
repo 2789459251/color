@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -113,7 +114,7 @@ func SendCode(c *gin.Context) {
 	utils.Red.Set(c, phone, code, 5*time.Minute)
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0, //成功
-		"message": "验证码已发送，请注意查收,code:" + string(code),
+		"message": "验证码已发送，请注意查收,code:" + strconv.Itoa(code),
 		"data":    nil,
 	})
 }
@@ -129,6 +130,14 @@ func LoginByCode(c *gin.Context) {
 		})
 	}
 	code := c.Request.FormValue("code")
+	if code == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"code":    -1,
+			"massage": "请输入验证码！",
+			"data":    nil,
+		})
+		return
+	}
 	//查询redis
 	cacheCode, _ := utils.Red.Get(c, phone).Result()
 	//不一致就不放行
