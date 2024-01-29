@@ -1,6 +1,7 @@
 package service
 
 import (
+	"color/dto"
 	"color/models"
 	"color/utils"
 	"fmt"
@@ -19,9 +20,12 @@ func Upload(c *gin.Context) {
 	w := c.Writer
 	imageInfo, url := upload(r, w, c)
 	fmt.Println("url:", url)
-	models.AddImage(*imageInfo)
+	dto.AddImage(*imageInfo)
 	utils.RespOk(w, url, "色块上传成功")
 }
+
+// todo 1.修改成只上传石田测试题
+// todo 2.添加色感测试的生成器
 func Uploadshi(c *gin.Context) {
 	r := c.Request
 	w := c.Writer
@@ -38,7 +42,7 @@ func Uploadshi(c *gin.Context) {
 	models.AddIshida(Ishida)
 	utils.RespOk(w, url, "石田测试题上传成功")
 }
-func upload(r *http.Request, w http.ResponseWriter, c *gin.Context) (imageInfo *models.ImageInfo, url string) {
+func upload(r *http.Request, w http.ResponseWriter, c *gin.Context) (imageInfo *dto.ImageInfo, url string) {
 	//获得上传文件
 	srcFile, head, err := r.FormFile("file")
 	if err != nil {
@@ -51,7 +55,7 @@ func upload(r *http.Request, w http.ResponseWriter, c *gin.Context) (imageInfo *
 		suffix = "." + t[len(t)-1]
 	}
 	fileName := fmt.Sprintf("%d%04d%s", time.Now().Unix(), rand.Int31(), suffix)
-	imageInfo = &models.ImageInfo{}
+	imageInfo = &dto.ImageInfo{}
 	imageInfo.C_type, err = strconv.Atoi(c.Request.FormValue("color"))
 	if err != nil {
 		utils.RespFail(w, err.Error())

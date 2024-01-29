@@ -1,8 +1,8 @@
 package models
 
 import (
+	"color/dto"
 	"color/utils"
-	"fmt"
 	"golang.org/x/exp/rand"
 	"gorm.io/gorm"
 	"time"
@@ -11,7 +11,7 @@ import (
 type IssueIshida struct {
 	gorm.Model
 	IssueID uint
-	Issue   ImageInfo `gorm:"foreignKey:IssueID"`
+	Issue   dto.ImageInfo `gorm:"foreignKey:IssueID"`
 	OptionA string
 	OptionB string
 	OptionC string
@@ -31,7 +31,6 @@ func Select() []IssueIshida {
 	utils.DB.Order("RAND()").Limit(4).Find(&issueIshida)
 	for i := range issueIshida {
 		utils.DB.Where("ID = ?", issueIshida[i].IssueID).First(&issueIshida[i].Issue)
-		fmt.Println("图片信息：", issueIshida[i].Issue)
 	}
 	return issueIshida
 }

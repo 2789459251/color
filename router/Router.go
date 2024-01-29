@@ -23,6 +23,7 @@ func Router() *gin.Engine {
 
 	//检测---提交后判断
 	testGroup.GET("/JudgeColor", service.Judge_c)
+	testGroup.POST("/JudgeMethod1", service.Judge_m)
 	testGroup.Use(utils.JWTAuth())
 	//功能
 	r.POST("/attach/upload", service.Upload)
