@@ -114,7 +114,7 @@ func SendCode(c *gin.Context) {
 	utils.Red.Set(c, phone, code, 5*time.Minute)
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0, //成功
-		"message": "验证码已发送，请注意查收,code:" + strconv.Itoa(code),
+		"message": strconv.Itoa(code),
 		"data":    nil,
 	})
 }

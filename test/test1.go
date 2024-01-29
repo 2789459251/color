@@ -1,12 +1,5 @@
 package main
 
-import (
-	"fmt"
-	"math/rand"
-	"strconv"
-	"time"
-)
-
 // var fileGroups = make(map[string][]string)
 //
 //	func Init_color() {
@@ -46,10 +39,10 @@ import (
 //		fileGroups[dir] = append(fileGroups[dir], path)
 //		return nil
 //	}
-func main() {
-	fmt.Println(rands())
-}
-func rands() string {
-	rand.Seed(time.Now().UnixNano())
-	return strconv.Itoa(int(rand.Int31n(2) + 1))
-}
+//func main() {
+//	fmt.Println(rands())
+//}
+//func rands() string {
+//	rand.Seed(time.Now().UnixNano())
+//	return strconv.Itoa(int(rand.Int31n(2) + 1))
+//}
