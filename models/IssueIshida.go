@@ -34,3 +34,8 @@ func Select() []IssueIshida {
 	}
 	return issueIshida
 }
+
+// 两表联查
+func SeachIshida() {
+
+}

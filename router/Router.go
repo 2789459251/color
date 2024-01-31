@@ -18,13 +18,14 @@ func Router() *gin.Engine {
 	userGroup.POST("/loginByCode", service.LoginByCode)
 	userGroup.POST("/resetPassword", service.ResetPassword)
 	//测试---用户获取
+	testGroup.Use(utils.JWTAuth())
 	testGroup.GET("/color", service.GetColor)
-	testGroup.GET("/method1", service.Method1list)
+	testGroup.GET("/method1", service.Method1)
 
 	//检测---提交后判断
 	testGroup.GET("/JudgeColor", service.Judge_c)
 	testGroup.POST("/JudgeMethod1", service.Judge_m)
-	testGroup.Use(utils.JWTAuth())
+
 	//功能
 	r.POST("/attach/upload", service.Upload)
 	r.POST("/attach/uploadshi", service.Uploadshi)

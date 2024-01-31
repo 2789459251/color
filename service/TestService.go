@@ -11,18 +11,26 @@ import (
 	"time"
 )
 
-func Method1list(c *gin.Context) {
+const (
+	红色 = iota + 1
+	绿色
+	蓝紫色
+)
+
+func Method1(c *gin.Context) {
 	var issues = make([]dto.IssueInfo, 0)
 	Issues := models.Select()
 	for _, ishida := range Issues {
 		issue := dto.IssueInfo{
-			Id:  ishida.ID,
-			Key: ishida.Key,
+			Id:      ishida.ID,
+			Key:     ishida.Key,
+			ImageID: int(ishida.IssueID),
 		}
 		issues = append(issues, issue)
 	}
 	jsondata, _ := json.Marshal(issues)
-	utils.Red.Set(c, token(c), jsondata, 12*time.Hour)
+	token := token(c)
+	utils.Red.Set(c, token, jsondata, 12*time.Hour)
 	utils.RespOk(c.Writer, Issues, "返回四条石田测试题")
 }
 
@@ -53,22 +61,78 @@ func Judge_c(c *gin.Context) {
 // 将Issue的list存入redis并从redis去出查看答案
 func Judge_m(c *gin.Context) {
 	options := c.Request.FormValue("options")
-	var str string
 	Issues, _ := utils.Red.Get(c, token(c)).Result()
+	var str string
 	var issuesCache = make([]dto.IssueInfo, 0)
+	var results = make([]dto.ResultInfo, 0)
+	var rets = make([]int, 3)
 	json.Unmarshal([]byte(Issues), &issuesCache)
+	cnt := 0
 	for i, issueCache := range issuesCache {
 		if i < len(options) {
+			image := dto.SeachImage(issueCache.ImageID)
 			if issueCache.Key == string(options[i]) {
-				str += "第" + strconv.Itoa(i+1) + "题回答正确\n"
+				result := dto.ResultInfo{
+					Key:   issueCache.Key,
+					Mykey: string(options[i]),
+					Point: Point(image.C_type),
+					Image: image.Image,
+					Flag:  true,
+				}
+				results = append(results, result)
+				cnt++
+				//str += "第" + strconv.Itoa(i+1) + "题回答正确\n"
 			} else {
-				str += "第" + strconv.Itoa(i+1) + "题回答错误\n"
+				result := dto.ResultInfo{
+					Key:   issueCache.Key,
+					Mykey: string(options[i]),
+					Point: Point(image.C_type),
+					Image: image.Image,
+					Flag:  false,
+				}
+				rets[image.C_type-1]++
+				results = append(results, result)
+				//str += "第" + strconv.Ita(i+1) + "题回答错误\n"
 			}
 		} else {
 			// 如果 options 长度不足，则假定为错误
-			str += "第" + strconv.Itoa(i+1) + "题回答错误\n"
+			//str += "第" + strconv.Itoa(i+1) + "题回答错误\n"
+		}
+
+	}
+	str = ret(rets)
+	utils.RespOk(c.Writer, results, "共有4道题，回答正确"+strconv.Itoa(cnt)+"道题;"+str)
+	return
+}
+
+// 返回结果？？？
+func Point(t int) string {
+	switch t {
+	case 1:
+		{
+			return "分析：红色色盲"
+		}
+	case 2:
+		{
+			return "分析：红色色盲"
+		}
+	case 3:
+		{
+			return "分析：蓝紫色盲"
 		}
 	}
-	utils.RespOk(c.Writer, nil, str)
-	return
+	return ""
+}
+func ret(t []int) string {
+	var str string
+	if t[0] != 0 {
+		str += "有一定程度红色认知困难 "
+	}
+	if t[1] != 0 {
+		str += "有一定程度绿色认知困难 "
+	}
+	if t[2] != 0 {
+		str += "有一定程度蓝紫色认知困难 "
+	}
+	return str
 }

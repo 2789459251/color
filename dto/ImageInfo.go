@@ -18,3 +18,8 @@ func (table *ImageInfo) TableName() string {
 func AddImage(Image ImageInfo) {
 	utils.DB.Create(&Image)
 }
+func SeachImage(id int) ImageInfo {
+	imageInfo := ImageInfo{}
+	utils.DB.Where("id = ?", id).First(&imageInfo)
+	return imageInfo
+}

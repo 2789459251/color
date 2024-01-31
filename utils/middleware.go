@@ -13,7 +13,7 @@ var secretKey = []byte("color")
 func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 获取请求头中 token，实际是一个完整被签名过的 token；a complete, signed token
-		tokenStr := c.GetHeader("Authorization")
+		tokenStr, _ := c.Cookie("Authorization")
 		if tokenStr == "" {
 			c.JSON(http.StatusForbidden, "没有token,不允许进入!")
 			c.Abort()
@@ -29,11 +29,16 @@ func JWTAuth() gin.HandlerFunc {
 		// 获取 token 中的 claims
 		claims, ok := token.Claims.(*AuthClaims)
 		if !ok {
-			c.JSON(http.StatusForbidden, "token无效!")
+			c.JSON(http.StatusForbidden, "token没有携带正确用户信息，无效!")
 			c.Abort()
 			return
 		}
 
+		if time.Unix(claims.ExpiresAt, 0).Before(time.Now()) {
+			c.JSON(http.StatusForbidden, "token过期，无效!")
+			c.Abort()
+			return
+		}
 		// 将 claims 中的用户信息存储在 context 中
 		c.Set("userInfoId", claims.UserInfoId)
 
