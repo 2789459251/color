@@ -4,6 +4,7 @@ import (
 	"color/dto"
 	"color/models"
 	"color/utils"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
@@ -97,4 +98,11 @@ func upload(r *http.Request, w http.ResponseWriter, c *gin.Context) (imageInfo *
 	}
 	imageInfo.Image = url
 	return imageInfo, url
+}
+func History(c *gin.Context) {
+	token := token(c)
+	userJson, _ := utils.Red.Get(c, "user:"+token).Result()
+	user := dto.UserInfo{}
+	json.Unmarshal([]byte(userJson), &user)
+	utils.RespOk(c.Writer, user.History, "历史记录")
 }

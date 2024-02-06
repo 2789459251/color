@@ -7,14 +7,7 @@ import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
 	"strconv"
-	"strings"
 	"time"
-)
-
-const (
-	红色 = iota + 1
-	绿色
-	蓝紫色
 )
 
 func Method1(c *gin.Context) {
@@ -30,38 +23,14 @@ func Method1(c *gin.Context) {
 	}
 	jsondata, _ := json.Marshal(issues)
 	token := token(c)
-	utils.Red.Set(c, token, jsondata, 12*time.Hour)
+	utils.Red.Set(c, "Result:"+token, jsondata, 12*time.Hour)
 	utils.RespOk(c.Writer, Issues, "返回四条石田测试题")
-}
-
-func GetColor(c *gin.Context) {
-	Issue := models.SearchColor()
-	Issue.Key = rands()
-	token := token(c)
-	utils.Red.Set(c, token, Issue.Key, 12*time.Hour)
-	utils.RespOk(c.Writer, Issue, "返回两张相似色调色块")
-}
-
-func Judge_c(c *gin.Context) {
-	token := token(c)
-	key := c.Query("key")
-	cacheKey := strings.Split(utils.Red.Get(c, token).String(), ":")
-	if len(cacheKey) != 2 {
-		utils.RespFail(c.Writer, "redis没有缓存该键")
-		return
-	}
-	if key != strings.TrimSpace(cacheKey[1]) {
-		utils.RespFail(c.Writer, "本题回答错误")
-		return
-	}
-	utils.RespOk(c.Writer, nil, "本题回答正确")
-	return
 }
 
 // 将Issue的list存入redis并从redis去出查看答案
 func Judge_m(c *gin.Context) {
 	options := c.Request.FormValue("options")
-	Issues, _ := utils.Red.Get(c, token(c)).Result()
+	Issues, _ := utils.Red.Get(c, "Result:"+token(c)).Result()
 	var str string
 	var issuesCache = make([]dto.IssueInfo, 0)
 	var results = make([]dto.ResultInfo, 0)
@@ -81,7 +50,6 @@ func Judge_m(c *gin.Context) {
 				}
 				results = append(results, result)
 				cnt++
-				//str += "第" + strconv.Itoa(i+1) + "题回答正确\n"
 			} else {
 				result := dto.ResultInfo{
 					Key:   issueCache.Key,
@@ -92,20 +60,29 @@ func Judge_m(c *gin.Context) {
 				}
 				rets[image.C_type-1]++
 				results = append(results, result)
-				//str += "第" + strconv.Ita(i+1) + "题回答错误\n"
 			}
-		} else {
-			// 如果 options 长度不足，则假定为错误
-			//str += "第" + strconv.Itoa(i+1) + "题回答错误\n"
 		}
-
 	}
 	str = ret(rets)
+	id, _ := c.Get("userInfoId")
+	userJson, _ := utils.Red.Get(c, "user:"+token(c)).Result()
+	user := dto.UserInfo{}
+	json.Unmarshal([]byte(userJson), &user)
+	history := dto.History{
+		Time:       time.Now(),
+		Result:     "共有4道题，回答正确" + strconv.Itoa(cnt) + "道题;" + str,
+		ResultInfo: results,
+	}
+	if userJson == "" {
+		user.ID = int(id.(uint64))
+		user.Hightest = 0
+	}
+	user.History = append(user.History, history)
+	toUserJson, _ := json.Marshal(user)
+	utils.Red.Set(c, "user:"+token(c), toUserJson, -1)
 	utils.RespOk(c.Writer, results, "共有4道题，回答正确"+strconv.Itoa(cnt)+"道题;"+str)
 	return
 }
-
-// 返回结果？？？
 func Point(t int) string {
 	switch t {
 	case 1:
@@ -135,4 +112,35 @@ func ret(t []int) string {
 		str += "有一定程度蓝紫色认知困难 "
 	}
 	return str
+}
+func GetHighest(c *gin.Context) {
+	token := token(c)
+	id, _ := c.Get("userInfoId")
+	userJson, _ := utils.Red.Get(c, "user:"+token).Result()
+	user := dto.UserInfo{}
+	json.Unmarshal([]byte(userJson), &user)
+	if userJson == "" {
+		user.ID = int(id.(uint64))
+		user.Hightest = 0
+		utils.Red.Set(c, "user:"+token, user, -1)
+	}
+	utils.RespOk(c.Writer, user.Hightest, "获取最高纪录")
+}
+func SetHighest(c *gin.Context) {
+	score, _ := strconv.Atoi(c.Query("Score"))
+	id, _ := c.Get("userInfoId")
+	userJson, _ := utils.Red.Get(c, "user:"+token(c)).Result()
+	user := dto.UserInfo{}
+	json.Unmarshal([]byte(userJson), &user)
+	if userJson == "" {
+		user.ID = int(id.(uint64))
+	}
+	if score <= user.Hightest {
+		utils.RespFail(c.Writer, "未达到刷新要求")
+		return
+	}
+	user.Hightest = score
+	toUserJson, _ := json.Marshal(user)
+	utils.Red.Set(c, "user:"+token(c), toUserJson, -1)
+	utils.RespOk(c.Writer, nil, "刷新成功")
 }

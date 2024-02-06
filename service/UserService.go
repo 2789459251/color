@@ -103,9 +103,10 @@ func SendCode(c *gin.Context) {
 	if !isMatchPhone(phone) {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    -1,
-			"massage": "手机号码无效",
+			"message": "手机号码无效",
 			"data":    nil,
 		})
+		return
 	}
 	code := utils.GenerateSMSCode()
 	fmt.Println("验证码：", code)
@@ -116,6 +117,7 @@ func SendCode(c *gin.Context) {
 		"message": strconv.Itoa(code),
 		"data":    nil,
 	})
+	return
 }
 
 func LoginByCode(c *gin.Context) {
@@ -124,15 +126,16 @@ func LoginByCode(c *gin.Context) {
 	if !isMatchPhone(phone) {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    -1,
-			"massage": "手机号码无效",
+			"message": "手机号码无效",
 			"data":    nil,
 		})
+		return
 	}
 	code := c.Request.FormValue("code")
 	if code == "" {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    -1,
-			"massage": "请输入验证码！",
+			"message": "请输入验证码！",
 			"data":    nil,
 		})
 		return
