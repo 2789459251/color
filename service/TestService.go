@@ -5,15 +5,19 @@ import (
 	"color/models"
 	"color/utils"
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
 )
 
+var ishidas = make([]models.IssueIshida, 0)
+var temp int
+
 func Method1(c *gin.Context) {
 	var issues = make([]dto.IssueInfo, 0)
-	Issues := models.Select()
-	for _, ishida := range Issues {
+	ishidas = models.Select()
+	for _, ishida := range ishidas {
 		issue := dto.IssueInfo{
 			Id:      ishida.ID,
 			Key:     ishida.Key,
@@ -24,7 +28,28 @@ func Method1(c *gin.Context) {
 	jsondata, _ := json.Marshal(issues)
 	token := token(c)
 	utils.Red.Set(c, "Result:"+token, jsondata, 12*time.Hour)
-	utils.RespOk(c.Writer, Issues, "返回四条石田测试题")
+	utils.RespOk(c.Writer, ishidas[0], "已获取8道石田测试题")
+}
+func GetNextTest(c *gin.Context) {
+	n := len(ishidas)
+	temp++
+	if temp >= n {
+		utils.RespFail(c.Writer, "已到达最后一题")
+		temp = n - 1
+		return
+	}
+	i := temp + 1
+	utils.RespOk(c.Writer, ishidas[temp], "获得第"+strconv.Itoa(i)+"题")
+}
+func GetLastTest(c *gin.Context) {
+	temp--
+	if temp < 0 {
+		utils.RespFail(c.Writer, "已到达第一题")
+		temp = 0
+		return
+	}
+	i := temp + 1
+	utils.RespOk(c.Writer, ishidas[temp], "获得第"+strconv.Itoa(i)+"题")
 }
 
 // 将Issue的list存入redis并从redis去出查看答案
@@ -65,22 +90,26 @@ func Judge_m(c *gin.Context) {
 	}
 	str = ret(rets)
 	id, _ := c.Get("userInfoId")
-	userJson, _ := utils.Red.Get(c, "user:"+token(c)).Result()
-	user := dto.UserInfo{}
-	json.Unmarshal([]byte(userJson), &user)
+	//userJson, _ := utils.Red.Get(c, "user:"+token(c)).Result()
+	//userInfo := dto.UserInfo{}
+	//json.Unmarshal([]byte(userJson), &userInfo)
+	//这里有数字
+	user := models.FindUserById(strconv.Itoa(int(id.(uint64))))
+	userInfo := dto.FindUserInfo(strconv.Itoa(user.UserInfoId)) //id不对把
 	history := dto.History{
 		Time:       time.Now(),
-		Result:     "共有4道题，回答正确" + strconv.Itoa(cnt) + "道题;" + str,
+		Result:     "共有8道题，回答正确" + strconv.Itoa(cnt) + "道题;" + str,
 		ResultInfo: results,
 	}
-	if userJson == "" {
-		user.ID = int(id.(uint64))
-		user.Hightest = 0
+	if userInfo.History == nil {
+		userInfo.ID = uint(id.(uint64))
+		userInfo.Hightest = 0
+		userInfo.History = make([]dto.History, 0)
 	}
-	user.History = append(user.History, history)
-	toUserJson, _ := json.Marshal(user)
-	utils.Red.Set(c, "user:"+token(c), toUserJson, -1)
-	utils.RespOk(c.Writer, results, "共有4道题，回答正确"+strconv.Itoa(cnt)+"道题;"+str)
+	userInfo.History = append(userInfo.History, history)
+
+	dto.RefreshUserInfo(userInfo)
+	utils.RespOk(c.Writer, results, "共有8道题，回答正确"+strconv.Itoa(cnt)+"道题;"+str)
 	return
 }
 func Point(t int) string {
@@ -91,7 +120,7 @@ func Point(t int) string {
 		}
 	case 2:
 		{
-			return "分析：红色色盲"
+			return "分析：绿色色盲"
 		}
 	case 3:
 		{
@@ -114,33 +143,28 @@ func ret(t []int) string {
 	return str
 }
 func GetHighest(c *gin.Context) {
-	token := token(c)
 	id, _ := c.Get("userInfoId")
-	userJson, _ := utils.Red.Get(c, "user:"+token).Result()
-	user := dto.UserInfo{}
-	json.Unmarshal([]byte(userJson), &user)
-	if userJson == "" {
-		user.ID = int(id.(uint64))
-		user.Hightest = 0
-		utils.Red.Set(c, "user:"+token, user, -1)
+	userInfo := dto.FindUserInfo(strconv.Itoa(int(id.(uint64))))
+	if userInfo.History == nil {
+		userInfo.ID = uint(id.(uint64))
+		userInfo.Hightest = 0
+		dto.RefreshUserInfo(userInfo)
 	}
-	utils.RespOk(c.Writer, user.Hightest, "获取最高纪录")
+	utils.RespOk(c.Writer, userInfo.Hightest, "获取最高纪录")
 }
 func SetHighest(c *gin.Context) {
 	score, _ := strconv.Atoi(c.Query("Score"))
 	id, _ := c.Get("userInfoId")
-	userJson, _ := utils.Red.Get(c, "user:"+token(c)).Result()
-	user := dto.UserInfo{}
-	json.Unmarshal([]byte(userJson), &user)
-	if userJson == "" {
-		user.ID = int(id.(uint64))
-	}
-	if score <= user.Hightest {
+	userInfo := dto.FindUserInfo(strconv.Itoa(int(id.(uint64))))
+	fmt.Println("uuuuuuuuuuuu:", userInfo)
+	fmt.Println("uuuuuuuuuuuu:", userInfo.Hightest)
+	userInfo.ID = uint(id.(uint64))
+	if score <= userInfo.Hightest {
 		utils.RespFail(c.Writer, "未达到刷新要求")
 		return
 	}
-	user.Hightest = score
-	toUserJson, _ := json.Marshal(user)
-	utils.Red.Set(c, "user:"+token(c), toUserJson, -1)
+	userInfo.Hightest = score
+	fmt.Println("uuuuuuuuuuuu:", userInfo.Hightest)
+	dto.RefreshUserInfo(userInfo)
 	utils.RespOk(c.Writer, nil, "刷新成功")
 }

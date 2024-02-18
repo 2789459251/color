@@ -28,7 +28,7 @@ func AddIshida(Ishida IssueIshida) {
 func Select() []IssueIshida {
 	issueIshida := []IssueIshida{}
 	rand.Seed(uint64(time.Now().UnixNano()))
-	utils.DB.Order("RAND()").Limit(4).Find(&issueIshida)
+	utils.DB.Order("RAND()").Limit(8).Find(&issueIshida)
 	for i := range issueIshida {
 		utils.DB.Where("ID = ?", issueIshida[i].IssueID).First(&issueIshida[i].Issue)
 	}

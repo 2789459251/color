@@ -14,7 +14,7 @@ func CreateUser(c *gin.Context) {
 	//validate := validator.New()
 	user := models.User{}
 	phone := c.Request.FormValue("phone")
-	user2 := models.FindUser(phone)
+	user2 := models.FindUserByPhone(phone)
 	if user2.Password != "" {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    -1, //失败
@@ -66,7 +66,7 @@ func CreateUser(c *gin.Context) {
 func LoginByPassword(c *gin.Context) {
 	//不要明文存储密码=
 	phone := c.Request.FormValue("phone")
-	user := models.FindUser(phone)
+	user := models.FindUserByPhone(phone)
 	fmt.Println(user)
 	if user.Password == "" {
 		c.JSON(http.StatusOK, gin.H{
@@ -152,7 +152,7 @@ func LoginByCode(c *gin.Context) {
 		return
 	}
 	//一致就放行->如果用户尚且未注册，直接可以注册并告知默认密码
-	user := models.FindUser(phone)
+	user := models.FindUserByPhone(phone)
 	if user.Password == "" {
 		user.Phone = phone
 		user.Password, _ = utils.GetPwd("111111Az*")
@@ -178,7 +178,7 @@ func LoginByCode(c *gin.Context) {
 func ResetPassword(c *gin.Context) {
 	phone := c.Request.FormValue("phone")
 	password := c.Request.FormValue("password")
-	user := models.FindUser(phone)
+	user := models.FindUserByPhone(phone)
 	if !isMatchPhone(phone) {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    -1,

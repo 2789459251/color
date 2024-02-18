@@ -4,7 +4,6 @@ import (
 	"color/dto"
 	"color/models"
 	"color/utils"
-	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"io"
@@ -26,7 +25,6 @@ func Upload(c *gin.Context) {
 }
 
 // todo 1.修改成只上传石田测试题
-// todo 2.添加色感测试的生成器
 func Uploadshi(c *gin.Context) {
 	r := c.Request
 	w := c.Writer
@@ -99,10 +97,38 @@ func upload(r *http.Request, w http.ResponseWriter, c *gin.Context) (imageInfo *
 	imageInfo.Image = url
 	return imageInfo, url
 }
+
+// userJson, _ := utils.Red.Get(c, "user:"+token).Result()
+// user := dto.UserInfo{}
+// json.Unmarshal([]byte(userJson), &user)
 func History(c *gin.Context) {
-	token := token(c)
-	userJson, _ := utils.Red.Get(c, "user:"+token).Result()
-	user := dto.UserInfo{}
-	json.Unmarshal([]byte(userJson), &user)
-	utils.RespOk(c.Writer, user.History, "历史记录")
+	id, _ := c.Get("userInfoId")
+	user := models.FindUserById(strconv.Itoa(int(id.(uint64))))
+	userinfo := dto.FindUserInfo(strconv.Itoa(user.UserInfoId))
+	utils.RespOk(c.Writer, userinfo.History, "历史记录")
+}
+
+func UploadFavorite(c *gin.Context) {
+	r, _ := strconv.ParseFloat(c.Request.FormValue("R"), 64)
+	g, _ := strconv.ParseFloat(c.Request.FormValue("G"), 64)
+	b, _ := strconv.ParseFloat(c.Request.FormValue("B"), 64)
+	a, _ := strconv.ParseFloat(c.Request.FormValue("A"), 64)
+	favorite := dto.Favorite{
+		Name: c.Request.FormValue("name"), //颜色昵称
+		R:    r,
+		G:    g,
+		B:    b,
+		A:    a,
+	}
+	id, _ := c.Get("userInfoId")
+	user := dto.FindUserInfo(strconv.Itoa(int(id.(uint64))))
+	user.Favorite = append(user.Favorite, favorite)
+	dto.RefreshUserInfo(user)
+	utils.RespOk(c.Writer, user.Favorite, "ok")
+}
+func Favorite(c *gin.Context) {
+	id, _ := c.Get("userInfoId")
+	user := models.FindUserById(strconv.Itoa(int(id.(uint64))))
+	userinfo := dto.FindUserInfo(strconv.Itoa(user.UserInfoId))
+	utils.RespOk(c.Writer, userinfo.Favorite, "收藏夹")
 }

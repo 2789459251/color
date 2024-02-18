@@ -8,7 +8,7 @@ import (
 
 func Router() *gin.Engine {
 	r := gin.Default()
-
+	r.Static("/Asset", "Asset/")
 	userGroup := r.Group("/user")
 	testGroup := r.Group("/test")
 	//用户
@@ -21,6 +21,8 @@ func Router() *gin.Engine {
 	testGroup.Use(utils.JWTAuth())
 	//testGroup.GET("/color", service.GetColor)
 	testGroup.GET("/method1", service.Method1)
+	testGroup.GET("/methodNextTest", service.GetNextTest)
+	testGroup.GET("/methodLastTest", service.GetLastTest)
 
 	//检测---提交后判断
 	testGroup.GET("/GetHighest", service.GetHighest)
@@ -28,8 +30,22 @@ func Router() *gin.Engine {
 	testGroup.POST("/JudgeMethod1", service.Judge_m)
 
 	//功能
-	r.POST("/attach/upload", service.Upload)
-	r.POST("/attach/uploadshi", service.Uploadshi)
-	r.GET("/attach/history", service.History)
+	attachGroup := r.Group("/attach")
+	attachGroup.Use(utils.JWTAuth())
+
+	attachGroup.POST("/upload", service.Upload)
+	attachGroup.POST("/uploadshi", service.Uploadshi)
+	attachGroup.GET("/history", service.History)
+	//收藏夹管理
+	attachGroup.POST("/uploadFavorite", service.UploadFavorite)
+	attachGroup.GET("/Favorite", service.Favorite)
+
+	//文章管理
+	//上传文章
+	attachGroup.POST("/uploadArticle", service.UploadArticle)
+	//获取专题所有文章
+	attachGroup.GET("/getArticles", service.GetArticles)
+	attachGroup.GET("/getNextArticle", service.GetNextArticle)
+	attachGroup.GET("/getLastArticle", service.GetLastArticle)
 	return r
 }
