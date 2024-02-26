@@ -39,6 +39,7 @@ func Router() *gin.Engine {
 	//收藏夹管理
 	attachGroup.POST("/uploadFavorite", service.UploadFavorite)
 	attachGroup.GET("/Favorite", service.Favorite)
+	attachGroup.DELETE("/cancelFavorite", service.CancelFavorite)
 
 	//文章管理
 	//上传文章

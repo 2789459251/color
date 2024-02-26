@@ -1,6 +1,7 @@
 package service
 
 import (
+	"color/dto"
 	"color/models"
 	"color/utils"
 	"github.com/gin-gonic/gin"
@@ -93,3 +94,31 @@ func token(c *gin.Context) string {
 }
 
 // Todo 刷新token的操作
+func User(c *gin.Context) (models.User, dto.UserInfo) {
+	id, _ := c.Get("userInfoId")
+	user := models.FindUserById(strconv.Itoa(int(id.(uint64))))
+	userinfo := dto.FindUserInfo(strconv.Itoa(user.UserInfoId))
+	return user, userinfo
+}
+func deleteFavorite(favorites []dto.Favorite, name string) ([]dto.Favorite, bool) {
+	//移位法，切换
+	ok := false
+	for i, favorite := range favorites {
+		if favorite.Name == name {
+			favorites = append(favorites[:i], favorites[i+1:]...)
+			ok = true
+		}
+	}
+	return favorites, ok
+}
+func seachFavorite(favorites []dto.Favorite, name string) bool {
+	//移位法，切换
+	ok := false
+	for _, favorite := range favorites {
+		if favorite.Name == name {
+			ok = true
+			break
+		}
+	}
+	return ok
+}

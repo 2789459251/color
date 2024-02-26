@@ -102,9 +102,7 @@ func upload(r *http.Request, w http.ResponseWriter, c *gin.Context) (imageInfo *
 // user := dto.UserInfo{}
 // json.Unmarshal([]byte(userJson), &user)
 func History(c *gin.Context) {
-	id, _ := c.Get("userInfoId")
-	user := models.FindUserById(strconv.Itoa(int(id.(uint64))))
-	userinfo := dto.FindUserInfo(strconv.Itoa(user.UserInfoId))
+	_, userinfo := User(c)
 	utils.RespOk(c.Writer, userinfo.History, "历史记录")
 }
 
@@ -120,15 +118,36 @@ func UploadFavorite(c *gin.Context) {
 		B:    b,
 		A:    a,
 	}
-	id, _ := c.Get("userInfoId")
-	user := dto.FindUserInfo(strconv.Itoa(int(id.(uint64))))
-	user.Favorite = append(user.Favorite, favorite)
-	dto.RefreshUserInfo(user)
-	utils.RespOk(c.Writer, user.Favorite, "ok")
+	//id, _ := c.Get("userInfoId")
+	//user := dto.FindUserInfo(strconv.Itoa(int(id.(uint64))))
+	_, userinfo := User(c)
+	//如果名字存在，重复命名
+	if seachFavorite(userinfo.Favorite, favorite.Name) {
+		utils.RespFail(c.Writer, "重复命名,请重新请求")
+		return
+	}
+	userinfo.Favorite = append(userinfo.Favorite, favorite)
+	dto.RefreshUserInfo(userinfo)
+	utils.RespOk(c.Writer, userinfo.Favorite, "ok")
 }
 func Favorite(c *gin.Context) {
-	id, _ := c.Get("userInfoId")
-	user := models.FindUserById(strconv.Itoa(int(id.(uint64))))
-	userinfo := dto.FindUserInfo(strconv.Itoa(user.UserInfoId))
+	_, userinfo := User(c)
 	utils.RespOk(c.Writer, userinfo.Favorite, "收藏夹")
+}
+func CancelFavorite(c *gin.Context) {
+	name := c.Request.FormValue("name")
+	if name == "" {
+		utils.RespFail(c.Writer, "颜色名不能为空")
+		return
+	}
+	_, userInfo := User(c)
+	favorite := userInfo.Favorite
+	favorite, ok := deleteFavorite(favorite, name)
+	if !ok {
+		utils.RespFail(c.Writer, "删除失败,未查询到该色")
+		return
+	}
+	userInfo.Favorite = favorite
+	dto.RefreshUserInfo(userInfo)
+	utils.RespOk(c.Writer, favorite, "删除成功")
 }
