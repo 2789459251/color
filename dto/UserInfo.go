@@ -75,9 +75,12 @@ func RefreshUserInfo(userInfo UserInfo) {
 
 	// 更新数据库中的用户信息，包括序列化后的 History 字段
 	result := utils.DB.Model(&userInfo).Updates(map[string]interface{}{
+		"hightest": userInfo.Hightest,
 		"history":  string(historyJSON),
 		"favorite": string(favoriteJSON),
 	})
+	//fmt.Println("userinfo:", userInfo)
+	//utils.DB.Update("height", userInfo.History)
 	if result.Error != nil {
 		// 处理更新错误
 		fmt.Println("更新info出错:", result.Error)

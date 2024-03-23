@@ -26,7 +26,7 @@ func Router() *gin.Engine {
 
 	//检测---提交后判断
 	testGroup.GET("/GetHighest", service.GetHighest)
-	testGroup.GET("/RefreshHighest", service.SetHighest)
+	testGroup.POST("/RefreshHighest", service.SetHighest)
 	testGroup.POST("/JudgeMethod1", service.Judge_m)
 
 	//功能

@@ -106,20 +106,26 @@ func History(c *gin.Context) {
 	utils.RespOk(c.Writer, userinfo.History, "历史记录")
 }
 
+// 将存储的数据转成json数组
 func UploadFavorite(c *gin.Context) {
-	r, _ := strconv.ParseFloat(c.Request.FormValue("R"), 64)
-	g, _ := strconv.ParseFloat(c.Request.FormValue("G"), 64)
-	b, _ := strconv.ParseFloat(c.Request.FormValue("B"), 64)
-	a, _ := strconv.ParseFloat(c.Request.FormValue("A"), 64)
-	favorite := dto.Favorite{
-		Name: c.Request.FormValue("name"), //颜色昵称
-		R:    r,
-		G:    g,
-		B:    b,
-		A:    a,
+
+	//favorite := dto.Favorite{
+	//	Name: c.Request.FormValue("name"), //颜色昵称
+	//}
+	//c.ShouldBindJSON(favorite.R)
+	//c.ShouldBindJSON(favorite.G)
+	//c.ShouldBindJSON(favorite.B)
+	//c.ShouldBindJSON(favorite.A)
+
+	var favorite dto.Favorite
+	if err := c.ShouldBindJSON(&favorite); err != nil {
+		utils.RespFail(c.Writer, err.Error())
+		return
 	}
-	//id, _ := c.Get("userInfoId")
-	//user := dto.FindUserInfo(strconv.Itoa(int(id.(uint64))))
+	if len(favorite.R) != len(favorite.G) || len(favorite.G) != len(favorite.B) || len(favorite.B) != len(favorite.A) {
+		utils.RespFail(c.Writer, "数据格式错误")
+		return
+	}
 	_, userinfo := User(c)
 	//如果名字存在，重复命名
 	if seachFavorite(userinfo.Favorite, favorite.Name) {

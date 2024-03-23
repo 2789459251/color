@@ -8,10 +8,10 @@ import (
 
 type Favorite struct {
 	Name string
-	R    float64
-	G    float64
-	B    float64
-	A    float64
+	R    []string `json:"R"`
+	G    []string `json:"G"`
+	B    []string `json:"B"`
+	A    []string `json:"A"`
 }
 
 func (f Favorite) Value() (driver.Value, error) {

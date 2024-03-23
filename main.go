@@ -1,6 +1,7 @@
 package main
 
 import (
+	"color/dto"
 	"color/models"
 	"color/router"
 	"color/utils"
@@ -54,10 +55,10 @@ func main() {
 	utils.InitConfig()
 	//initMysql
 	utils.InitMysql()
-	//utils.DB.Migrator().DropTable(&models.User{})
-	//utils.DB.Migrator().DropTable(&dto.UserInfo{})
-	//utils.DB.AutoMigrate(&models.User{})
-	//utils.DB.AutoMigrate(&dto.UserInfo{})
+	utils.DB.Migrator().DropTable(&models.User{})
+	utils.DB.Migrator().DropTable(&dto.UserInfo{})
+	utils.DB.AutoMigrate(&models.User{})
+	utils.DB.AutoMigrate(&dto.UserInfo{})
 	//utils.DB.AutoMigrate(&models.ImageInfo{})
 	//utils.DB.AutoMigrate(&models.IssueIshida{})
 	//utils.DB.AutoMigrate(&models.IssueColor{})

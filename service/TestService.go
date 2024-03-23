@@ -5,7 +5,6 @@ import (
 	"color/models"
 	"color/utils"
 	"encoding/json"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"time"
@@ -145,26 +144,23 @@ func ret(t []int) string {
 func GetHighest(c *gin.Context) {
 	id, _ := c.Get("userInfoId")
 	userInfo := dto.FindUserInfo(strconv.Itoa(int(id.(uint64))))
-	if userInfo.History == nil {
-		userInfo.ID = uint(id.(uint64))
-		userInfo.Hightest = 0
-		dto.RefreshUserInfo(userInfo)
-	}
+	//if userInfo.History == nil {
+	//	userInfo.ID = uint(id.(uint64))
+	//	userInfo.Hightest = 0
+	//	dto.RefreshUserInfo(userInfo)
+	//}
 	utils.RespOk(c.Writer, userInfo.Hightest, "获取最高纪录")
 }
 func SetHighest(c *gin.Context) {
-	score, _ := strconv.Atoi(c.Query("Score"))
+	score, _ := strconv.Atoi(c.Request.FormValue("Score"))
 	id, _ := c.Get("userInfoId")
 	userInfo := dto.FindUserInfo(strconv.Itoa(int(id.(uint64))))
-	fmt.Println("uuuuuuuuuuuu:", userInfo)
-	fmt.Println("uuuuuuuuuuuu:", userInfo.Hightest)
 	userInfo.ID = uint(id.(uint64))
-	if score <= userInfo.Hightest {
+	if score <= userInfo.Hightest || score <= 0 {
 		utils.RespFail(c.Writer, "未达到刷新要求")
 		return
 	}
 	userInfo.Hightest = score
-	fmt.Println("uuuuuuuuuuuu:", userInfo.Hightest)
 	dto.RefreshUserInfo(userInfo)
 	utils.RespOk(c.Writer, nil, "刷新成功")
 }
