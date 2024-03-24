@@ -112,11 +112,12 @@ func SendCode(c *gin.Context) {
 	fmt.Println("验证码：", code)
 	//将验证码存入redis
 	utils.Red.Set(c, phone, code, 5*time.Minute)
-	c.JSON(http.StatusOK, gin.H{
-		"code":    0, //成功
-		"message": strconv.Itoa(code),
-		"data":    nil,
-	})
+	//c.JSON(http.StatusOK, gin.H{
+	//	"code":    0, //成功
+	//	"message": strconv.Itoa(code),
+	//	"data":    nil,
+	//})
+	utils.RespOk(c.Writer, nil, strconv.Itoa(code))
 	return
 }
 

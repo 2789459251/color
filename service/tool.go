@@ -111,14 +111,61 @@ func deleteFavorite(favorites []dto.Favorite, name string) ([]dto.Favorite, bool
 	}
 	return favorites, ok
 }
-func seachFavorite(favorites []dto.Favorite, name string) bool {
+func seachFavorite(favorites []dto.Favorite, name string) (dto.Favorite, bool) {
 	//移位法，切换
 	ok := false
 	for _, favorite := range favorites {
 		if favorite.Name == name {
 			ok = true
+			return favorite, ok
+		}
+	}
+	return dto.Favorite{}, ok
+}
+func changFavorite(favorites []dto.Favorite, name, newname string) ([]dto.Favorite, bool) {
+	//移位法，切换
+	ok := false
+	for i, favorite := range favorites {
+		if favorite.Name == name {
+			ok = true
+			favorites[i].Name = newname
 			break
 		}
 	}
-	return ok
+	return favorites, ok
+}
+func appendColor(favorites []dto.Favorite, name string, color dto.Color) ([]dto.Favorite, bool) {
+	//移位法，切换
+	ok := false
+	for i, favorite := range favorites {
+		if favorite.Name == name {
+			ok = true
+			favorites[i].Color = append(favorite.Color, color)
+			ok = true
+			break
+		}
+	}
+	return favorites, ok
+}
+func deleteColor(favorites []dto.Favorite, name string, id int) ([]dto.Favorite, bool) {
+	//移位法，切换
+	ok := false
+	for i, favorite := range favorites {
+		if favorite.Name == name {
+			favorites[i].Color, ok = deletecolor(favorite.Color, id)
+			break
+		}
+	}
+	return favorites, ok
+}
+func deletecolor(colors []dto.Color, id int) ([]dto.Color, bool) {
+	//移位法，切换
+	ok := false
+	for i, color := range colors {
+		if color.Id == id {
+			colors = append(colors[:i], colors[i+1:]...)
+			ok = true
+		}
+	}
+	return colors, ok
 }

@@ -7,11 +7,15 @@ import (
 )
 
 type Favorite struct {
-	Name string
-	R    []string `json:"R"`
-	G    []string `json:"G"`
-	B    []string `json:"B"`
-	A    []string `json:"A"`
+	Name  string
+	Color []Color `json:"color"`
+}
+type Color struct {
+	Id int
+	R  string
+	G  string
+	B  string
+	A  string
 }
 
 func (f Favorite) Value() (driver.Value, error) {
@@ -38,16 +42,3 @@ func (f *Favorite) Scan(value interface{}) error {
 
 	return nil
 }
-
-//
-//// Implement sql.Scanner interface for History type
-//func (h *History) Scan(value interface{}) error {
-//	strValue, ok := value.(string)
-//	if !ok {
-//		return errors.New("输入的并非字符串")
-//	}
-//	if err := json.Unmarshal([]byte(strValue), h); err != nil {
-//		return err
-//	}
-//	return nil
-//}
